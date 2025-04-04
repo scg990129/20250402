@@ -68,12 +68,14 @@ public class AdvancedBitSet extends BitSet implements Iterable<Integer> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
+        int max = this.previousSetBit(this.size() - 1);
+        int digits = max > 0 ? (int) Math.floor(Math.log10(max)) + 1 : 1;
+        String format = "%0" + digits + "d ";
 
-        for (int i = 0; i < size(); i++) {
-            if (get(i)) {
-                sb.append(i).append(" ");
-            }
+        for(int i: this){
+            sb.append(String.format(format,i) );
         }
+
         return sb.toString().trim();
     }
 
