@@ -73,10 +73,24 @@ import java.util.stream.*;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
-        System.out.println("Hello, World!");
-        System.out.println("Hello, World!");
+        AdvancedBitSet bitset = new AdvancedBitSet(20);
+        bitset.setAndGet(2, 3, 5, 8, 13, 17);
+
+        System.out.println("Ascending:");
+        bitset.iterator(true, true).forEachRemaining(i -> System.out.print(i + " "));
+
+        System.out.println("\nDescending:");
+        bitset.iterator(true, false).forEachRemaining(i -> System.out.print(i + " "));
+
+        System.out.println("\nClear bits (asc):");
+        bitset.iterator(false, true).forEachRemaining(i -> System.out.print(i + " "));
+
+        System.out.println("\nClear bits (desc):");
+        bitset.iterator(false, false).forEachRemaining(i -> System.out.print(i + " "));
     }
+
+
+
 
 
 }

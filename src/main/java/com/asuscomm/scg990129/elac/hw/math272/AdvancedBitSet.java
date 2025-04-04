@@ -29,6 +29,10 @@ public class AdvancedBitSet extends BitSet implements Iterable<Integer> {
         return new BitSetIterator(targetBoolean, isAscendingOrder);
     }
 
+    public synchronized Iterator<Integer> iterator(boolean targetBoolean, int beginIncluded, int endIncluded) {
+        return new BitSetIterator(targetBoolean, beginIncluded, endIncluded);
+    }
+
     @Override
     public synchronized void set(int bitIndex) {
         super.set(bitIndex);
@@ -42,6 +46,25 @@ public class AdvancedBitSet extends BitSet implements Iterable<Integer> {
     @Override
     public synchronized boolean get(int bitIndex) {
         return super.get(bitIndex);
+    }
+
+    public synchronized BitSet setAndGet(int bitIndex) {
+        this.setAndGet(bitIndex, true);
+        return this;
+    }
+    public synchronized BitSet setAndGet(int bitIndex, boolean value) {
+        this.set(bitIndex, value);
+        return this;
+    }
+    public synchronized BitSet setAndGet(int... bitIndex) {
+        this.setAndGet( true, bitIndex);
+        return this;
+    }
+    public synchronized BitSet setAndGet(boolean value, int... bitIndex) {
+        for(int i:bitIndex){
+            this.set(i, value);
+        }
+        return this;
     }
 
     @Override
@@ -68,12 +91,14 @@ public class AdvancedBitSet extends BitSet implements Iterable<Integer> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
+        int max = this.previousSetBit(this.size() - 1);
+        int digits = max > 0 ? (int) Math.floor(Math.log10(max)) + 1 : 1;
+        String format = "%0" + digits + "d ";
 
-        for (int i = 0; i < size(); i++) {
-            if (get(i)) {
-                sb.append(i).append(" ");
-            }
+        for(int i: this){
+            sb.append(String.format(format,i) );
         }
+
         return sb.toString().trim();
     }
 
@@ -81,32 +106,31 @@ public class AdvancedBitSet extends BitSet implements Iterable<Integer> {
         protected int currentIndex = -1;
         protected IntUnaryOperator next;
         protected boolean isAscendingOrder;
+        protected int beginIncluded = 0, endIncluded = AdvancedBitSet.this.size() - 1;
 
-        public BitSetIterator(boolean getValue, boolean isAscendingOrder) {
-            this.isAscendingOrder = isAscendingOrder;
-
-            if (getValue) {
-                if (isAscendingOrder) {
-                    this.next = AdvancedBitSet.this::nextSetBit;
-                    this.currentIndex = this.next.applyAsInt(0);
-                } else {
-                    this.next = AdvancedBitSet.this::previousSetBit;
-                    this.currentIndex = this.next.applyAsInt(AdvancedBitSet.this.size() - 1);
-                }
-            } else {
-                if (isAscendingOrder) {
-                    this.next = AdvancedBitSet.this::nextClearBit;
-                    this.currentIndex = nextClearBit(0);
-                } else {
-                    this.next = AdvancedBitSet.this::previousClearBit;
-                    this.currentIndex = previousClearBit(AdvancedBitSet.this.size() - 1);
-                }
+        public BitSetIterator(boolean value, int beginIncluded, int endIncluded){
+            if (beginIncluded < 0 || endIncluded < 0){
+                throw new IllegalArgumentException("beginIncluded < 0 || endIncluded < 0");
             }
+
+            this.endIncluded = endIncluded;
+            this.beginIncluded = beginIncluded;
+            this.isAscendingOrder = beginIncluded <= endIncluded;
+
+            this.next = value? isAscendingOrder ? AdvancedBitSet.this::nextSetBit: AdvancedBitSet.this::previousSetBit:
+                    isAscendingOrder ? AdvancedBitSet.this::nextClearBit : AdvancedBitSet.this::previousClearBit;
+
+            this.currentIndex = this.next.applyAsInt(beginIncluded);
+        }
+
+        public BitSetIterator(boolean value, boolean isAscendingOrder) {
+            this(value, isAscendingOrder? 0: AdvancedBitSet.this.size() - 1, isAscendingOrder? AdvancedBitSet.this.size() - 1: 0);
         }
 
         @Override
         public boolean hasNext() {
-            return currentIndex != -1;
+            return currentIndex != -1 && isAscendingOrder? (currentIndex >= beginIncluded && currentIndex <= endIncluded)
+                    : (currentIndex <= beginIncluded && currentIndex >= endIncluded) ;
         }
 
         @Override
